@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Voices of the Unheard</title>
+  <meta name="description" content="Voices of the Unheard — real life stories from India. Share your story." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="vintage">
+  <div class="page">
+    <header class="header">
+      <div class="brand">
+        <div class="logo">VoU</div>
+        <div>
+          <h1>Voices of the Unheard</h1>
+          <p class="tag">Real life stories from every corner of India</p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <label class="small">Theme</label>
+        <select id="themeSelect">
+          <option value="sepia">Vintage Paper</option>
+          <option value="mandala">Mandala</option>
+          <option value="dark">Dark</option>
+        </select>
+
+        <label class="small">Background Music</label>
+        <button id="audioToggle" class="btn">Play</button>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="featured">
+        <img id="featuredImage" src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e" alt="featured" />
+        <div class="featText">
+          <h2 id="featuredTitle">The River and the Net</h2>
+          <p id="featuredExcerpt">He wakes at 3am every day to cast a net and bring home bread for his family.</p>
+          <button id="readBtn" class="primary">Read Story</button>
+        </div>
+      </section>
+
+      <section id="stories" class="stories">
+        <!-- sample story cards -->
+        <article class="card">
+          <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b" />
+          <div>
+            <h3>Hostel Became My Home</h3>
+            <p class="meta">Ananya • Students' Struggles</p>
+            <p class="excerpt">From preparing tea for 20 people to studying at midnight — she kept going.</p>
+            <button class="readSmall">Read</button>
+          </div>
+        </article>
+        <!-- more cards can be added -->
+      </section>
+
+      <section class="submit">
+        <h3>Share Your Story</h3>
+        <p>We collect stories respectfully. Use the form below to send a draft — we'll contact you for consent before publishing.</p>
+
+        <!-- EMBED GOOGLE FORM: replace the iframe src with your form's embed link -->
+        <div class="formWrap">
+          <iframe id="gForm" src="https://docs.google.com/forms/d/e/1FAIpQLSc4cCAvbTGwCl2xtJ3h5Qm9JWaaNd_ZwpOkoMajjPLUDZpr8A/viewform?embedded=true">Loading…</iframe>" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      © <span id="year"></span> Voices of the Unheard — Preserve real stories with dignity.
+    </footer>
+
+    <!-- Story modal -->
+    <div id="modal" class="modal hidden" aria-hidden="true">
+      <div class="modalBox">
+        <button id="closeModal" class="close">Close</button>
+        <div id="modalContent">
+          <h2 id="modalTitle">Story Title</h2>
+          <p id="modalAuthor" class="meta"></p>
+          <blockquote id="modalExcerpt"></blockquote>
+          <div id="modalBody">
+            <p>This is a sample full story area. When you have your CMS or DB, populate this with the published story content.</p>
+          </div>
+
+          <div class="modalControls">
+            <label>Theme</label>
+            <select id="modalTheme">
+              <option>Vintage Paper</option>
+              <option>Seaside</option>
+              <option>Earthy</option>
+            </select>
+            <label>Background</label>
+            <button id="modalPlay">Play Sample</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <audio id="bgAudio" loop>
+    <source src="background-sample.mp3" type="audio/mpeg">
+    <!-- If you don't have an mp3 yet, remove or replace this -->
+  </audio>
+
+  <script src="script.js"></script>
+</body>
+</html>

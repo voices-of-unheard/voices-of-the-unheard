@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Story — Voices of the Unheard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="reader">
+  <div class="reader-wrap">
+    <a class="back" href="/">← Back</a>
+    <article class="reader-article">
+      <h1 id="rTitle"></h1>
+      <p id="rBy" class="meta"></p>
+      <img id="rImage" alt="">
+      <div id="rBody" class="reader-body"></div>
+      <div class="reader-controls">
+        <audio id="rAudio" controls></audio>
+      </div>
+    </article>
+  </div>
+
+  <script src="stories.js"></script>
+  <script>
+    // read id from query string
+    function q(name){ const u=new URLSearchParams(location.search); return u.get(name); }
+    const id = q('id');
+    const story = (window.VOU_STORIES||[]).find(s=>s.id===id);
+    if(!story){
+      document.body.innerHTML = '<div class="reader-wrap"><p>Story not found. <a href="/">Go back</a></p></div>';
+    } else {
+      document.getElementById('rTitle').textContent = story.title;
+      document.getElementById('rBy').textContent = story.author + ' • ' + story.category;
+      document.getElementById('rImage').src = story.image;
+      document.getElementById('rBody').innerHTML = story.body;
+      const rAudio = document.getElementById('rAudio');
+      if(story.audio){ rAudio.src = story.audio; rAudio.style.display='block'; } else rAudio.style.display='none';
+    }
+  </script>
+</body>
+</html>

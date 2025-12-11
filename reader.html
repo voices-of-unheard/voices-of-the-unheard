@@ -5,59 +5,114 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Story — Voices of the Unheard</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    /* tiny reader-specific tweaks */
+    .reader-wrap { padding: 18px; }
+    .back { display:inline-block; margin-bottom:12px; color:var(--muted); text-decoration:none; }
+    .reader-article { background:var(--card); padding:18px; border-radius:10px; box-shadow:0 18px 40px rgba(0,0,0,0.06); }
+    #rImage { width:100%; height:auto; border-radius:8px; display:block; margin:8px 0 12px 0; object-fit:cover; max-height:520px; }
+    .tts-controls { display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+    .tts-controls .btn { padding:8px 12px; border-radius:8px; }
+    .reader-body { margin-top:6px; line-height:1.75; font-size:17px; }
+    @media (max-width:800px){
+      .reader-article{padding:12px}
+      .tts-controls{gap:6px}
+    }
+  </style>
 </head>
 <body class="reader">
   <div class="reader-wrap">
     <a id="backLink" class="back" href="index.html">← Back</a>
-    <article class="reader-article">
+
+    <article class="reader-article" aria-live="polite">
       <h1 id="rTitle"></h1>
       <p id="rBy" class="meta"></p>
-      <img id="rImage" alt="story image">
-      <div id="rBody" class="reader-body"></div>
-      <div class="reader-controls">
-        <audio id="rAudio" controls style="display:none"></audio>
 
-        <!-- TTS controls -->
-        <div class="tts-controls" aria-label="Text to speech controls">
-          <button id="btnTTSPlay" class="btn">🔊 Read Aloud</button>
-          <button id="btnTTSPause" class="btn" style="display:none">⏸ Pause</button>
-          <button id="btnTTSStop" class="btn" style="display:none">■ Stop</button>
-          <label for="ttsRate" class="sr-only">Rate</label>
-          <input id="ttsRate" type="range" min="0.7" max="1.6" step="0.1" value="1" title="Speech rate"/>
-        </div>
+      <!-- Image (lazy) -->
+      <img id="rImage" src="" alt="story image" loading="lazy" />
+
+      <!-- Read Aloud controls: moved directly under image (start of story) -->
+      <div class="tts-controls" aria-label="Text to speech controls" id="ttsBlock" style="display:none">
+        <button id="btnTTSPlay" class="btn primary">🔊 Read Aloud</button>
+        <button id="btnTTSPause" class="btn" style="display:none">⏸ Pause</button>
+        <button id="btnTTSStop" class="btn" style="display:none">■ Stop</button>
+        <label for="ttsRate" class="sr-only">Rate</label>
+        <input id="ttsRate" type="range" min="0.7" max="1.6" step="0.1" value="1" title="Speech rate"/>
+        <span id="ttsHint" class="muted" style="font-size:13px;margin-left:6px;">Voice: English (browser)</span>
+      </div>
+
+      <!-- Story body -->
+      <div id="rBody" class="reader-body"></div>
+
+      <!-- Audio player (optional, shown if audio exists) -->
+      <div class="reader-controls" style="margin-top:14px;">
+        <audio id="rAudio" controls style="display:none; width:100%"></audio>
       </div>
     </article>
   </div>
 
   <script src="stories.js"></script>
   <script>
-    // read id from query string
+    // Helper to read query params
     function q(name){ const u=new URLSearchParams(location.search); return u.get(name); }
+
+    // Load story by id
     const id = q('id');
+    const playParam = q('play');
     const story = (window.VOU_STORIES||[]).find(s=>s.id===id);
+
+    // If not found, show friendly message
     if(!story){
       document.body.innerHTML = '<div class="reader-wrap"><p>Story not found. <a href="index.html">Go back</a></p></div>';
     } else {
+      // Populate title / byline
       document.getElementById('rTitle').textContent = story.title;
       document.getElementById('rBy').textContent = story.author + ' • ' + story.category;
+
+      // Image: set src, ensure visible and attach fallback
       const rImage = document.getElementById('rImage');
-      if(story.image){ rImage.src = story.image; rImage.style.display='block'; } else rImage.style.display='none';
+      if(story.image){
+        rImage.src = story.image;
+        rImage.alt = story.title;
+        rImage.style.display = 'block';
+      } else {
+        rImage.style.display = 'none';
+      }
+      rImage.addEventListener('error', () => {
+        // fallback image when remote fails
+        rImage.src = 'https://via.placeholder.com/1200x700?text=Image+not+available';
+      });
+
+      // story body
       document.getElementById('rBody').innerHTML = story.body;
+
+      // audio (optional)
       const rAudio = document.getElementById('rAudio');
-      if(story.audio){ rAudio.src = story.audio; rAudio.style.display='block'; } else rAudio.style.display='none';
+      if(story.audio){
+        rAudio.src = story.audio;
+        rAudio.style.display = 'block';
+      } else {
+        rAudio.style.display = 'none';
+      }
+
+      // Show TTS controls (we have story text)
+      const ttsBlock = document.getElementById('ttsBlock');
+      ttsBlock.style.display = 'flex';
     }
 
-    // TTS (Web Speech API) for reader.html
+    // ========== TTS (Web Speech API) ==========
     (function(){
       const btnPlay = document.getElementById('btnTTSPlay');
       const btnPause = document.getElementById('btnTTSPause');
       const btnStop = document.getElementById('btnTTSStop');
       const rateSlider = document.getElementById('ttsRate');
-      const storyEl = document.getElementById('rBody'); // your story content container
+      const storyEl = document.getElementById('rBody');
+      const ttsHint = document.getElementById('ttsHint');
 
-      if(!('speechSynthesis' in window) || !storyEl || !btnPlay) {
-        // hide controls if not supported
-        if(btnPlay) btnPlay.style.display = 'none';
+      if(!('speechSynthesis' in window) || !storyEl || !btnPlay){
+        // hide TTS if unsupported
+        const b = document.getElementById('ttsBlock');
+        if(b) b.style.display = 'none';
         return;
       }
 
@@ -65,28 +120,29 @@
       let voices = [];
 
       function loadVoices(){
-        voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en') );
-        // prefer female voices where possible
+        voices = speechSynthesis.getVoices().filter(v => v.lang && v.lang.startsWith('en'));
+        // best-effort female preference
         voices.sort((a,b)=>{
           const af = /female|woman|zira|samantha|alloy/i.test(a.name) ? -1 : 1;
           const bf = /female|woman|zira|samantha|alloy/i.test(b.name) ? -1 : 1;
           return af - bf;
         });
+        // update hint
+        if(voices.length) ttsHint.textContent = 'Voice: ' + (voices[0].name || voices[0].lang);
       }
-      // load voices (may be async)
       loadVoices();
       window.speechSynthesis.onvoiceschanged = loadVoices;
 
-      function speakText(){
+      function speakText(autoStart=false){
+        // stop any previous
         speechSynthesis.cancel();
-        utter = new SpeechSynthesisUtterance();
-        let text = storyEl.innerText || storyEl.textContent || '';
-        utter.text = text.trim();
+        const raw = (storyEl.innerText || storyEl.textContent || '').trim();
+        if(!raw) { alert('No story text to read.'); return; }
+        utter = new SpeechSynthesisUtterance(raw);
         utter.lang = 'en-US';
         utter.rate = parseFloat(rateSlider.value) || 1;
-        if(voices && voices.length){
-          utter.voice = voices.find(v => /female|woman|zira|samantha|alloy/i.test(v.name)) || voices[0];
-        }
+        if(voices && voices.length) utter.voice = voices.find(v => /female|woman|zira|samantha|alloy/i.test(v.name)) || voices[0];
+
         utter.onstart = () => {
           btnPlay.style.display = 'none';
           btnPause.style.display = 'inline-block';
@@ -99,12 +155,12 @@
         };
         utter.onerror = (e) => {
           console.error('TTS error', e);
-          alert('Text-to-speech error. Try a different browser.');
+          alert('Text-to-speech error. Try a different browser (Chrome/Edge recommended).');
         };
         speechSynthesis.speak(utter);
       }
 
-      btnPlay.addEventListener('click', speakText);
+      btnPlay.addEventListener('click', ()=> speakText(true));
       btnPause.addEventListener('click', () => {
         if(speechSynthesis.paused) {
           speechSynthesis.resume();
@@ -120,6 +176,19 @@
         btnPause.style.display = 'none';
         btnStop.style.display = 'none';
       });
+
+      // If URL has ?play=1 auto-start TTS (use with caution on mobile)
+      try {
+        if(playParam === '1') {
+          // small delay to ensure voices loaded
+          setTimeout(()=> {
+            if(voices.length === 0) loadVoices();
+            speakText(true);
+          }, 500);
+        }
+      } catch(e){
+        console.warn('Auto-play TTS blocked or failed', e);
+      }
     })();
   </script>
 </body>

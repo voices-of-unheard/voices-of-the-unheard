@@ -97,31 +97,56 @@ document.addEventListener('click', (e)=>{
 
 const FORMSPREE_ENDPOINT = "https://formspree.io/f/xldqojrl"; // <-- set here if you sign up to Formspree, e.g. "https://formspree.io/f/..."
 
-// helper to convert form data to FormData and send
-submitForm.addEventListener('submit', async (ev)=>{
+
+submitForm.addEventListener('submit', async (ev) => {
   ev.preventDefault();
   submitStatus.textContent = 'Sending…';
-  const fd = new FormData(submitForm);
+  submitStatus.style.color = 'inherit';
 
-  // if Formspree configured
-  if(FORMSPREE_ENDPOINT){
-    try{
-      const res = await fetch(FORMSPREE_ENDPOINT, {method:'POST', body: fd});
-      if(res.ok){ submitStatus.textContent = 'Thanks! We received your story. We will contact you for consent.'; submitForm.reset(); }
-      else { submitStatus.textContent = 'Submission failed. Try again later.'; }
-    } catch(err){ submitStatus.textContent = 'Network error. Try again.'; }
-    return;
+  try {
+    const fd = new FormData(submitForm);
+
+    // Debug: log form keys & simple preview (no file binary)
+    console.group('Form submission debug');
+    for (let pair of fd.entries()) {
+      const [k, v] = pair;
+      console.log('field:', k, (v instanceof File) ? `(file: ${v.name} size ${v.size})` : v);
+    }
+    console.groupEnd();
+
+    if (!FORMSPREE_ENDPOINT || FORMSPREE_ENDPOINT.includes('YOUR_FORM_ID')) {
+      submitStatus.textContent = 'Form endpoint not configured. Ask admin to update FORMSPREE_ENDPOINT.';
+      submitStatus.style.color = 'crimson';
+      return;
+    }
+
+    // Send as multipart/form-data (FormData) — Formspree expects this
+    const resp = await fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      body: fd,
+      mode: 'cors'
+    });
+
+    console.log('Network response', resp);
+    const text = await resp.text().catch(()=>null);
+
+    if (resp.ok) {
+      submitStatus.textContent = 'Thanks! Story sent. We will contact you for consent.';
+      submitStatus.style.color = 'green';
+      submitForm.reset();
+    } else {
+      // resp not ok — show details
+      submitStatus.textContent = `Submission failed (${resp.status}). See console for details.`;
+      submitStatus.style.color = 'crimson';
+      console.error('Formspree error response:', resp.status, resp.statusText, text);
+    }
+  } catch (err) {
+    // network or JS error
+    submitStatus.textContent = 'Network or script error. See console for details.';
+    submitStatus.style.color = 'crimson';
+    console.error('Submission exception:', err);
   }
-
-  // Option B: direct post to Google Forms (requires mapping)
-  // If you want this, open your Google Form and find input names 'entry.123456' and then add them as hidden inputs or modify this code to map keys.
-  // For now we just store the data in a local downloadable file experience: convert to JSON and offer to download (safe fallback)
-  const obj = {};
-  fd.forEach((v,k)=>{ obj[k]=v instanceof File? v.name : v; });
-  const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'submission.json'; a.textContent='Download submission (backup)';
-  submitStatus.textContent = ''; submitStatus.appendChild(a);
 });
+
 
 // end script

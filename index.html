@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Voices of the Unheard</title>
   <meta name="description" content="Voices of the Unheard — real life stories from India. Share your story." />
+  <!-- Open Graph (basic) -->
+  <meta property="og:title" content="Voices of the Unheard">
+  <meta property="og:description" content="Real life stories from India — share your story.">
+  <meta property="og:type" content="website">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="vintage">
@@ -20,48 +24,50 @@
 
       <div class="controls">
         <label class="small">Theme</label>
-        <select id="themeSelect">
+        <select id="themeSelect" aria-label="Choose theme">
           <option value="sepia">Vintage Paper</option>
           <option value="mandala">Mandala</option>
           <option value="dark">Dark</option>
         </select>
 
-        <label class="small">Background Music</label>
-        <button id="audioToggle" class="btn">Play</button>
+        <label class="small">Category</label>
+        <select id="categorySelect" aria-label="Filter by category">
+          <option value="All">All</option>
+          <option value="Dreamers">Dreamers</option>
+          <option value="Survivors">Survivors</option>
+          <option value="Forgotten Professions">Forgotten Professions</option>
+          <option value="Students' Struggles">Students' Struggles</option>
+          <option value="Mothers of Steel">Mothers of Steel</option>
+        </select>
       </div>
     </header>
 
-    <main class="container">
-      <section class="featured">
-        <img id="featuredImage" src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e" alt="featured" />
-        <div class="featText">
-          <h2 id="featuredTitle">The River and the Net</h2>
-          <p id="featuredExcerpt">He wakes at 3am every day to cast a net and bring home bread for his family.</p>
-          <button id="readBtn" class="primary">Read Story</button>
+    <main class="max">
+      <section class="hero">
+        <div class="hero-card">
+          <img id="featuredImage" src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e" alt="featured" />
+          <div class="featText">
+            <h2 id="featuredTitle">The River and the Net</h2>
+            <p id="featuredExcerpt">He wakes at 3am every day to cast a net and bring home bread for his family.</p>
+            <div class="hero-actions">
+              <button id="readBtn" class="primary">Read Story</button>
+              <button id="listenBtn" class="secondary">Listen</button>
+            </div>
+          </div>
         </div>
       </section>
 
       <section id="stories" class="stories">
-        <!-- sample story cards -->
-        <article class="card">
-          <img src="https://images.unsplash.com/photo-1503676260728-1c00da094a0b" />
-          <div>
-            <h3>Hostel Became My Home</h3>
-            <p class="meta">Ananya • Students' Struggles</p>
-            <p class="excerpt">From preparing tea for 20 people to studying at midnight — she kept going.</p>
-            <button class="readSmall">Read</button>
-          </div>
-        </article>
-        <!-- more cards can be added -->
+        <!-- Place story <article> blocks here. Example story added via manual insertion. -->
+        <!-- Example card inserted by you earlier / by next step -->
       </section>
 
       <section class="submit">
         <h3>Share Your Story</h3>
         <p>We collect stories respectfully. Use the form below to send a draft — we'll contact you for consent before publishing.</p>
-
-        <!-- EMBED GOOGLE FORM: replace the iframe src with your form's embed link -->
         <div class="formWrap">
-          <iframe id="gForm" src="https://docs.google.com/forms/d/e/1FAIpQLSc4cCAvbTGwCl2xtJ3h5Qm9JWaaNd_ZwpOkoMajjPLUDZpr8A/viewform?embedded=true">Loading…</iframe>" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+          <!-- Replace with your Google Form embed src -->
+          <iframe id="gForm" src="PASTE_YOUR_GOOGLE_FORM_EMBED_LINK_HERE" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
         </div>
       </section>
     </main>
@@ -70,39 +76,27 @@
       © <span id="year"></span> Voices of the Unheard — Preserve real stories with dignity.
     </footer>
 
-    <!-- Story modal -->
-    <div id="modal" class="modal hidden" aria-hidden="true">
-      <div class="modalBox">
-        <button id="closeModal" class="close">Close</button>
-        <div id="modalContent">
-          <h2 id="modalTitle">Story Title</h2>
-          <p id="modalAuthor" class="meta"></p>
-          <blockquote id="modalExcerpt"></blockquote>
-          <div id="modalBody">
-            <p>This is a sample full story area. When you have your CMS or DB, populate this with the published story content.</p>
-          </div>
+    <!-- global audio element for story backgrounds -->
+    <audio id="storyAudio" loop preload="metadata"></audio>
 
-          <div class="modalControls">
-            <label>Theme</label>
-            <select id="modalTheme">
-              <option>Vintage Paper</option>
-              <option>Seaside</option>
-              <option>Earthy</option>
-            </select>
-            <label>Background</label>
-            <button id="modalPlay">Play Sample</button>
-          </div>
+    <!-- modal -->
+    <div id="modal" class="modal hidden" aria-hidden="true" role="dialog" aria-modal="true">
+      <div class="modalBox" role="document">
+        <button id="closeModal" class="close" aria-label="Close story">Close</button>
+        <div id="modalHeader">
+          <h2 id="modalTitle"></h2>
+          <p id="modalAuthor" class="meta"></p>
+        </div>
+        <div id="modalBody" class="story-content"></div>
+        <div class="modalFooter">
+          <button id="copyLink" class="btn">Copy Link</button>
+          <a id="shareTwitter" class="btn" target="_blank" rel="noopener">Share</a>
+          <button id="toggleAudio" class="btn">Play Background</button>
         </div>
       </div>
     </div>
-
   </div>
 
-  <audio id="bgAudio" loop>
-    <source src="background-sample.mp3" type="audio/mpeg">
-    <!-- If you don't have an mp3 yet, remove or replace this -->
-  </audio>
-
-  <script src="script.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>

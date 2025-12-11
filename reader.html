@@ -12,10 +12,19 @@
     <article class="reader-article">
       <h1 id="rTitle"></h1>
       <p id="rBy" class="meta"></p>
-      <img id="rImage" alt="">
+      <img id="rImage" alt="story image">
       <div id="rBody" class="reader-body"></div>
       <div class="reader-controls">
-        <audio id="rAudio" controls></audio>
+        <audio id="rAudio" controls style="display:none"></audio>
+
+        <!-- TTS controls -->
+        <div class="tts-controls" aria-label="Text to speech controls">
+          <button id="btnTTSPlay" class="btn">🔊 Read Aloud</button>
+          <button id="btnTTSPause" class="btn" style="display:none">⏸ Pause</button>
+          <button id="btnTTSStop" class="btn" style="display:none">■ Stop</button>
+          <label for="ttsRate" class="sr-only">Rate</label>
+          <input id="ttsRate" type="range" min="0.7" max="1.6" step="0.1" value="1" title="Speech rate"/>
+        </div>
       </div>
     </article>
   </div>
@@ -23,27 +32,95 @@
   <script src="stories.js"></script>
   <script>
     // read id from query string
-    (function(){
-    const back = document.getElementById('backLink');
-    if(!back) return;
-    // Prefer index.html in same folder (works for GitHub Pages)
-    back.href = 'index.html';
-    // Extra safety: if loaded under a path like /repos/..., compute root path
-    // const parts = location.pathname.split('/'); parts.pop(); back.href = parts.join('/') + '/';
-  })();
     function q(name){ const u=new URLSearchParams(location.search); return u.get(name); }
     const id = q('id');
     const story = (window.VOU_STORIES||[]).find(s=>s.id===id);
     if(!story){
-      document.body.innerHTML = '<div class="reader-wrap"><p>Story not found. <a href="/">Go back</a></p></div>';
+      document.body.innerHTML = '<div class="reader-wrap"><p>Story not found. <a href="index.html">Go back</a></p></div>';
     } else {
       document.getElementById('rTitle').textContent = story.title;
       document.getElementById('rBy').textContent = story.author + ' • ' + story.category;
-      document.getElementById('rImage').src = story.image;
+      const rImage = document.getElementById('rImage');
+      if(story.image){ rImage.src = story.image; rImage.style.display='block'; } else rImage.style.display='none';
       document.getElementById('rBody').innerHTML = story.body;
       const rAudio = document.getElementById('rAudio');
       if(story.audio){ rAudio.src = story.audio; rAudio.style.display='block'; } else rAudio.style.display='none';
     }
+
+    // TTS (Web Speech API) for reader.html
+    (function(){
+      const btnPlay = document.getElementById('btnTTSPlay');
+      const btnPause = document.getElementById('btnTTSPause');
+      const btnStop = document.getElementById('btnTTSStop');
+      const rateSlider = document.getElementById('ttsRate');
+      const storyEl = document.getElementById('rBody'); // your story content container
+
+      if(!('speechSynthesis' in window) || !storyEl || !btnPlay) {
+        // hide controls if not supported
+        if(btnPlay) btnPlay.style.display = 'none';
+        return;
+      }
+
+      let utter = null;
+      let voices = [];
+
+      function loadVoices(){
+        voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en') );
+        // prefer female voices where possible
+        voices.sort((a,b)=>{
+          const af = /female|woman|zira|samantha|alloy/i.test(a.name) ? -1 : 1;
+          const bf = /female|woman|zira|samantha|alloy/i.test(b.name) ? -1 : 1;
+          return af - bf;
+        });
+      }
+      // load voices (may be async)
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+
+      function speakText(){
+        speechSynthesis.cancel();
+        utter = new SpeechSynthesisUtterance();
+        let text = storyEl.innerText || storyEl.textContent || '';
+        utter.text = text.trim();
+        utter.lang = 'en-US';
+        utter.rate = parseFloat(rateSlider.value) || 1;
+        if(voices && voices.length){
+          utter.voice = voices.find(v => /female|woman|zira|samantha|alloy/i.test(v.name)) || voices[0];
+        }
+        utter.onstart = () => {
+          btnPlay.style.display = 'none';
+          btnPause.style.display = 'inline-block';
+          btnStop.style.display = 'inline-block';
+        };
+        utter.onend = () => {
+          btnPlay.style.display = 'inline-block';
+          btnPause.style.display = 'none';
+          btnStop.style.display = 'none';
+        };
+        utter.onerror = (e) => {
+          console.error('TTS error', e);
+          alert('Text-to-speech error. Try a different browser.');
+        };
+        speechSynthesis.speak(utter);
+      }
+
+      btnPlay.addEventListener('click', speakText);
+      btnPause.addEventListener('click', () => {
+        if(speechSynthesis.paused) {
+          speechSynthesis.resume();
+          btnPause.textContent = '⏸ Pause';
+        } else {
+          speechSynthesis.pause();
+          btnPause.textContent = '▶ Resume';
+        }
+      });
+      btnStop.addEventListener('click', () => {
+        speechSynthesis.cancel();
+        btnPlay.style.display = 'inline-block';
+        btnPause.style.display = 'none';
+        btnStop.style.display = 'none';
+      });
+    })();
   </script>
 </body>
 </html>

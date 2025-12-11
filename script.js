@@ -95,8 +95,8 @@ document.addEventListener('click', (e)=>{
 // Two options: A) Post to Formspree endpoint (fast) OR B) Post to your Google Form formResponse endpoint
 // Default behavior: attempt to submit to Formspree if FORMSPREE_ENDPOINT is set in window; otherwise fallback to JS "mailto" or local success message.
 
-const FORMSPREE_ENDPOINT = "https://formspree.io/f/xldqojrl"; // <-- set here if you sign up to Formspree, e.g. "https://formspree.io/f/..."
-
+// --- Formspree AJAX submission: request JSON to avoid redirect (CORS-safe) ---
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xldqojrl"; // <-- your endpoint
 
 submitForm.addEventListener('submit', async (ev) => {
   ev.preventDefault();
@@ -106,42 +106,40 @@ submitForm.addEventListener('submit', async (ev) => {
   try {
     const fd = new FormData(submitForm);
 
-    // Debug: log form keys & simple preview (no file binary)
+    // Remove file inputs if present and you don't have Formspree file support:
+    // fd.delete('photo'); fd.delete('audio'); // uncomment if needed
+
+    // Debug logging
     console.group('Form submission debug');
-    for (let pair of fd.entries()) {
-      const [k, v] = pair;
-      console.log('field:', k, (v instanceof File) ? `(file: ${v.name} size ${v.size})` : v);
+    for (let [k, v] of fd.entries()) {
+      console.log(k, v instanceof File ? `(file: ${v.name} ${v.size} bytes)` : v);
     }
     console.groupEnd();
 
-    if (!FORMSPREE_ENDPOINT || FORMSPREE_ENDPOINT.includes('YOUR_FORM_ID')) {
-      submitStatus.textContent = 'Form endpoint not configured. Ask admin to update FORMSPREE_ENDPOINT.';
-      submitStatus.style.color = 'crimson';
-      return;
-    }
-
-    // Send as multipart/form-data (FormData) — Formspree expects this
+    // Important: set Accept: application/json so Formspree returns JSON instead of redirecting
     const resp = await fetch(FORMSPREE_ENDPOINT, {
       method: 'POST',
       body: fd,
-      mode: 'cors'
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json'
+      }
     });
 
-    console.log('Network response', resp);
-    const text = await resp.text().catch(()=>null);
+    // Read JSON (Formspree returns JSON when Accept header is set)
+    const data = await resp.json().catch(()=>null);
+    console.log('Formspree response', resp.status, data);
 
     if (resp.ok) {
       submitStatus.textContent = 'Thanks! Story sent. We will contact you for consent.';
       submitStatus.style.color = 'green';
       submitForm.reset();
     } else {
-      // resp not ok — show details
       submitStatus.textContent = `Submission failed (${resp.status}). See console for details.`;
       submitStatus.style.color = 'crimson';
-      console.error('Formspree error response:', resp.status, resp.statusText, text);
+      console.error('Formspree error', resp.status, data);
     }
   } catch (err) {
-    // network or JS error
     submitStatus.textContent = 'Network or script error. See console for details.';
     submitStatus.style.color = 'crimson';
     console.error('Submission exception:', err);

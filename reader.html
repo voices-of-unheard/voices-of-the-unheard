@@ -8,7 +8,7 @@
 </head>
 <body class="reader">
   <div class="reader-wrap">
-    <a class="back" href="/">← Back</a>
+    <a id="backLink" class="back" href="index.html">← Back</a>
     <article class="reader-article">
       <h1 id="rTitle"></h1>
       <p id="rBy" class="meta"></p>
@@ -23,6 +23,14 @@
   <script src="stories.js"></script>
   <script>
     // read id from query string
+    (function(){
+    const back = document.getElementById('backLink');
+    if(!back) return;
+    // Prefer index.html in same folder (works for GitHub Pages)
+    back.href = 'index.html';
+    // Extra safety: if loaded under a path like /repos/..., compute root path
+    // const parts = location.pathname.split('/'); parts.pop(); back.href = parts.join('/') + '/';
+  })();
     function q(name){ const u=new URLSearchParams(location.search); return u.get(name); }
     const id = q('id');
     const story = (window.VOU_STORIES||[]).find(s=>s.id===id);

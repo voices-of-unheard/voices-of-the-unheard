@@ -95,7 +95,7 @@ document.addEventListener('click', (e)=>{
 // Two options: A) Post to Formspree endpoint (fast) OR B) Post to your Google Form formResponse endpoint
 // Default behavior: attempt to submit to Formspree if FORMSPREE_ENDPOINT is set in window; otherwise fallback to JS "mailto" or local success message.
 
-const FORMSPREE_ENDPOINT = null; // <-- set here if you sign up to Formspree, e.g. "https://formspree.io/f/..."
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/xldqojrl"; // <-- set here if you sign up to Formspree, e.g. "https://formspree.io/f/..."
 
 // helper to convert form data to FormData and send
 submitForm.addEventListener('submit', async (ev)=>{

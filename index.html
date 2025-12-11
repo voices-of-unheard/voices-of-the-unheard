@@ -53,7 +53,6 @@
           <p>Write your story directly here. We will contact you to confirm consent before publishing.</p>
 
           <!-- FORMSPREE FORM: hidden iframe used to avoid CORS & redirect issues -->
-          <!-- Replace the action URL if you change Formspree endpoint -->
           <form id="submitForm" action="https://formspree.io/f/xldqojrl" method="POST" target="hidden_iframe" class="submit-form" enctype="multipart/form-data">
             <label>Name
               <input name="name" type="text" placeholder="Your name or Anonymous">
@@ -86,9 +85,8 @@
               <textarea name="story" rows="8" placeholder="Write or paste your story here..." required></textarea>
             </label>
 
-            <!-- NOTE: File uploads are commented out. If you enable file uploads later,
-                 ensure your Formspree plan supports them or handle uploads separately -->
-            
+            <!-- File uploads commented out for now -->
+            <!--
             <label>Photo (optional)
               <input name="photo" type="file" accept="image/*">
             </label>
@@ -96,7 +94,7 @@
             <label>Audio (optional)
               <input name="audio" type="file" accept="audio/*">
             </label>
-            
+            -->
 
             <label class="consent"><input name="consent" type="checkbox" required> I confirm I own this story / have permission to share and consent to publication after confirmation.</label>
 

@@ -1,144 +1,127 @@
-// Basic helpers & initialization
+// script.js - frontend behavior
 document.getElementById('year').textContent = new Date().getFullYear();
 
-const themeSelect = document.getElementById('themeSelect');
-const categorySelect = document.getElementById('categorySelect');
-const storiesArea = document.getElementById('stories');
-const modal = document.getElementById('modal');
-const closeModal = document.getElementById('closeModal');
-const modalTitle = document.getElementById('modalTitle');
-const modalAuthor = document.getElementById('modalAuthor');
-const modalBody = document.getElementById('modalBody');
-const storyAudio = document.getElementById('storyAudio');
-const copyLink = document.getElementById('copyLink');
-const toggleAudio = document.getElementById('toggleAudio');
-const shareTwitter = document.getElementById('shareTwitter');
+// read stories loaded in stories.js
+const STORIES = window.VOU_STORIES || [];
 
-// theme persistence
-const savedTheme = localStorage.getItem('vou-theme') || 'sepia';
-themeSelect.value = savedTheme;
-applyTheme(savedTheme);
-themeSelect.addEventListener('change', (e) => {
-  applyTheme(e.target.value);
-  localStorage.setItem('vou-theme', e.target.value);
+// DOM refs
+const storiesEl = document.getElementById('stories');
+const categorySelect = document.getElementById('categorySelect');
+const themeSelect = document.getElementById('themeSelect');
+const featuredTitle = document.getElementById('featuredTitle');
+const featuredExcerpt = document.getElementById('featuredExcerpt');
+const featuredImage = document.getElementById('featuredImage');
+const featuredRead = document.getElementById('featuredRead');
+const featuredListen = document.getElementById('featuredListen');
+const submitForm = document.getElementById('submitForm');
+const submitStatus = document.getElementById('submitStatus');
+
+// populate categories
+const cats = new Set(['All']);
+STORIES.forEach(s => cats.add(s.category));
+cats.forEach(c => {
+  const opt = document.createElement('option'); opt.value = c; opt.textContent = c;
+  categorySelect.appendChild(opt);
 });
 
-function applyTheme(name){
-  if(name === 'sepia'){
-    document.body.style.background = 'linear-gradient(180deg,#fbf6ef 0%,#f0e6d6 100%)';
-    document.body.style.color = '#2b2b2b';
-  } else if(name === 'mandala'){
-    document.body.style.background = 'linear-gradient(180deg,#fff9f2 0%,#f9efe6 100%)';
-    document.body.style.color = '#2b2b2b';
-  } else if(name === 'dark'){
-    document.body.style.background = 'linear-gradient(180deg,#0f1113 0%,#1b1f24 100%)';
-    document.body.style.color = '#ddd';
-  }
+// render story cards
+function renderCards(list){
+  storiesEl.innerHTML = '';
+  list.forEach(s=>{
+    const a = document.createElement('article'); a.className='card';
+    a.setAttribute('data-category', s.category);
+    a.innerHTML = `
+      <img src="${s.image}" alt="${escapeHtml(s.title)}">
+      <div>
+        <h3>${escapeHtml(s.title)}</h3>
+        <div class="meta">${escapeHtml(s.author)} • ${escapeHtml(s.category)}</div>
+        <div class="excerpt">${escapeHtml(s.excerpt)}</div>
+        <div class="card-actions">
+          <a class="btn" href="reader.html?id=${encodeURIComponent(s.id)}">Read</a>
+          ${s.audio? `<button class="btn outline" data-audio="${s.audio}">Play</button>` : ''}
+        </div>
+      </div>
+    `;
+    storiesEl.appendChild(a);
+  });
+}
+renderCards(STORIES);
+
+// set featured (first story)
+if(STORIES.length){
+  const f = STORIES[0];
+  featuredTitle.textContent = f.title;
+  featuredExcerpt.textContent = f.excerpt;
+  featuredImage.src = f.image;
+  featuredRead.href = `reader.html?id=${encodeURIComponent(f.id)}`;
+  if(f.audio) featuredListen.onclick = ()=> location.href = `reader.html?id=${encodeURIComponent(f.id)}&play=1`;
+  else featuredListen.style.display='none';
 }
 
 // category filter
-categorySelect.addEventListener('change', () => {
-  const cat = categorySelect.value;
-  filterByCategory(cat);
+categorySelect.addEventListener('change', ()=>{
+  const val = categorySelect.value;
+  if(val === 'All') renderCards(STORIES);
+  else renderCards(STORIES.filter(s=>s.category===val));
 });
 
-function filterByCategory(cat){
-  const cards = [...storiesArea.querySelectorAll('.card')];
-  cards.forEach(c => {
-    const ccat = c.getAttribute('data-category') || 'All';
-    if(cat === 'All' || ccat === cat) {
-      c.style.display = '';
-      // small reveal animation
-      requestAnimationFrame(()=>{ c.style.transform = 'translateY(0)'; c.style.opacity = '1'; });
-    } else {
-      c.style.display = 'none';
-    }
-  });
+// theme persistence
+const savedTheme = localStorage.getItem('vouTheme') || 'sepia';
+setTheme(savedTheme);
+themeSelect.value = savedTheme;
+themeSelect.addEventListener('change', () => {
+  setTheme(themeSelect.value);
+  localStorage.setItem('vouTheme', themeSelect.value);
+});
+function setTheme(t){
+  if(t==='dark') document.documentElement.classList.add('dark');
+  else document.documentElement.classList.remove('dark');
 }
 
-// modal open from card
-function openStoryCard(button){
-  const card = button.closest('.card');
-  const tpl = card.querySelector('template.story-full');
-  const audioFile = card.getAttribute('data-audio');
-  if(!tpl) return;
-  modalTitle.textContent = tpl.content.querySelector('h2').textContent;
-  modalAuthor.textContent = tpl.content.querySelector('.byline')?.textContent || '';
-  modalBody.innerHTML = tpl.content.querySelector('.story-body').innerHTML;
+// helper
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-  // set share link to current page with fragment (you can craft real per-story URLs later)
-  const pageUrl = window.location.href.split('#')[0];
-  const storyId = encodeURIComponent(modalTitle.textContent.replace(/\s+/g,'-').toLowerCase());
-  const shareUrl = pageUrl + '#' + storyId;
-  shareTwitter.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(modalTitle.textContent)}&url=${encodeURIComponent(shareUrl)}`;
-  copyLink.onclick = () => { navigator.clipboard.writeText(shareUrl).then(()=>alert('Link copied')) };
-
-  // load audio if present
-  if(audioFile){
-    storyAudio.src = audioFile;
-    toggleAudio.style.display = 'inline-block';
-    toggleAudio.textContent = 'Play Background';
-    toggleAudio.onclick = () => {
-      if(storyAudio.paused){
-        storyAudio.play();
-        toggleAudio.textContent = 'Pause Background';
-      } else {
-        storyAudio.pause();
-        toggleAudio.textContent = 'Play Background';
-      }
-    };
-  } else {
-    storyAudio.pause();
-    storyAudio.src = '';
-    toggleAudio.style.display = 'none';
-  }
-
-  modal.classList.remove('hidden');
-  modal.setAttribute('aria-hidden','false');
-}
-
-// helper for Read Story on hero
-const readBtn = document.getElementById('readBtn');
-if(readBtn) readBtn.addEventListener('click', () => {
-  // open first card if exists
-  const first = document.querySelector('.card .readSmall')?.closest('.card');
-  if(first){
-    first.querySelector('.readSmall').click();
+// play audio buttons (event delegation)
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('button[data-audio]');
+  if(btn){
+    const audioSrc = btn.getAttribute('data-audio');
+    // open reader with play param to play audio
+    location.href = `reader.html?id=${encodeURIComponent(btn.closest('.card').querySelector('h3').textContent.toLowerCase().split(' ').join('-'))}&play=1`;
   }
 });
 
-// play story audio quick action
-function playStoryAudio(btn){
-  const card = btn.closest('.card');
-  const audioFile = card.getAttribute('data-audio');
-  if(!audioFile) { alert('No audio attached to this story'); return; }
-  if(storyAudio.src.indexOf(audioFile) === -1){
-    storyAudio.src = audioFile;
-  }
-  if(storyAudio.paused) {
-    storyAudio.play();
-    btn.textContent = 'Pause';
-  } else {
-    storyAudio.pause();
-    btn.textContent = 'Play Audio';
-  }
-}
+// ------- Form submission wiring -------
+// Two options: A) Post to Formspree endpoint (fast) OR B) Post to your Google Form formResponse endpoint
+// Default behavior: attempt to submit to Formspree if FORMSPREE_ENDPOINT is set in window; otherwise fallback to JS "mailto" or local success message.
 
-// close modal
-closeModal.addEventListener('click', () => {
-  modal.classList.add('hidden');
-  modal.setAttribute('aria-hidden','true');
-  storyAudio.pause();
+const FORMSPREE_ENDPOINT = null; // <-- set here if you sign up to Formspree, e.g. "https://formspree.io/f/..."
+
+// helper to convert form data to FormData and send
+submitForm.addEventListener('submit', async (ev)=>{
+  ev.preventDefault();
+  submitStatus.textContent = 'Sending…';
+  const fd = new FormData(submitForm);
+
+  // if Formspree configured
+  if(FORMSPREE_ENDPOINT){
+    try{
+      const res = await fetch(FORMSPREE_ENDPOINT, {method:'POST', body: fd});
+      if(res.ok){ submitStatus.textContent = 'Thanks! We received your story. We will contact you for consent.'; submitForm.reset(); }
+      else { submitStatus.textContent = 'Submission failed. Try again later.'; }
+    } catch(err){ submitStatus.textContent = 'Network error. Try again.'; }
+    return;
+  }
+
+  // Option B: direct post to Google Forms (requires mapping)
+  // If you want this, open your Google Form and find input names 'entry.123456' and then add them as hidden inputs or modify this code to map keys.
+  // For now we just store the data in a local downloadable file experience: convert to JSON and offer to download (safe fallback)
+  const obj = {};
+  fd.forEach((v,k)=>{ obj[k]=v instanceof File? v.name : v; });
+  const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'submission.json'; a.textContent='Download submission (backup)';
+  submitStatus.textContent = ''; submitStatus.appendChild(a);
 });
 
-// initial filter
-filterByCategory(categorySelect.value);
-
-// small: reveal animation when loading cards
-window.addEventListener('load', () => {
-  document.querySelectorAll('.card').forEach((c, i) => {
-    c.style.transform = 'translateY(14px)';
-    c.style.opacity = '0';
-    setTimeout(()=>{ c.style.transform = 'translateY(0)'; c.style.opacity = '1'; }, 120 + i*80);
-  });
-});
+// end script

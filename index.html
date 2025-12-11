@@ -37,7 +37,7 @@
     <main class="container">
       <section class="grid hero">
         <article class="featured">
-          <img id="featuredImage" src="" alt="">
+          <img id="featuredImage" src="" alt="featured story image">
           <div class="feat-text">
             <h2 id="featuredTitle"></h2>
             <p id="featuredExcerpt"></p>
@@ -52,12 +52,21 @@
           <h3>Share Your Story</h3>
           <p>Write your story directly here. We will contact you to confirm consent before publishing.</p>
 
-          <!-- In-site submission form -->
-          <!-- Choose backend: Formspree OR Google Form (instructions below) -->
-          <form id="submitForm" method="POST" class="submit-form">
-            <label>Name <input name="name" type="text" placeholder="Your name or 'Anonymous'"></label>
-            <label>Email or Phone <input name="contact" type="text" placeholder="Your email or phone" required></label>
-            <label>City/State <input name="location" type="text" placeholder="City, State"></label>
+          <!-- FORMSPREE FORM: hidden iframe used to avoid CORS & redirect issues -->
+          <!-- Replace the action URL if you change Formspree endpoint -->
+          <form id="submitForm" action="https://formspree.io/f/xldqojrl" method="POST" target="hidden_iframe" class="submit-form" enctype="multipart/form-data">
+            <label>Name
+              <input name="name" type="text" placeholder="Your name or Anonymous">
+            </label>
+
+            <label>Contact (Email or Phone) *
+              <input name="contact" type="text" placeholder="Email or phone" required>
+            </label>
+
+            <label>City / State
+              <input name="location" type="text" placeholder="City, State">
+            </label>
+
             <label>Category
               <select name="category">
                 <option>Dreamers</option>
@@ -68,24 +77,44 @@
                 <option>Other</option>
               </select>
             </label>
-            <label>Story Title <input name="title" type="text" placeholder="Short title"></label>
-            <label>Story <textarea name="story" rows="8" placeholder="Write or paste your story" required></textarea></label>
 
-            <label>Photo (optional) <input name="photo" type="file" accept="image/*"></label>
-            <label>Audio (optional) <input name="audio" type="file" accept="audio/*"></label>
+            <label>Story Title
+              <input name="title" type="text" placeholder="Short title">
+            </label>
+
+            <label>Your Story *
+              <textarea name="story" rows="8" placeholder="Write or paste your story here..." required></textarea>
+            </label>
+
+            <!-- NOTE: File uploads are commented out. If you enable file uploads later,
+                 ensure your Formspree plan supports them or handle uploads separately -->
+            
+            <label>Photo (optional)
+              <input name="photo" type="file" accept="image/*">
+            </label>
+
+            <label>Audio (optional)
+              <input name="audio" type="file" accept="audio/*">
+            </label>
+            
 
             <label class="consent"><input name="consent" type="checkbox" required> I confirm I own this story / have permission to share and consent to publication after confirmation.</label>
 
             <div class="form-actions">
               <button id="submitBtn" class="btn primary" type="submit">Send Story</button>
-              <div id="submitStatus" class="muted"></div>
+              <div id="submitStatus" class="muted" aria-live="polite"></div>
             </div>
           </form>
+
+          <!-- Hidden iframe catches the redirect so browser doesn't block it (no CORS) -->
+          <iframe name="hidden_iframe" style="display:none"></iframe>
+
+          <p class="muted small">We will contact you to confirm consent before publishing. Submissions are kept private until confirmed.</p>
         </aside>
       </section>
 
-      <section class="stories-grid" id="stories">
-        <!-- story cards injected by script -->
+      <section class="stories-grid" id="stories" aria-live="polite">
+        <!-- story cards injected by script.js -->
       </section>
 
     </main>

@@ -19,6 +19,24 @@
         </div>
       </div>
 
+
+      <!-- THEME CONTROLS -->
+<div class="theme-controls">
+  <button onclick="setTheme('light')">☀ Light</button>
+  <button onclick="setTheme('dark')">🌙 Dark</button>
+
+  <input type="color"
+         title="Accent color"
+         value="#b05c00"
+         onchange="setAccent(this.value)">
+
+  <select onchange="setFonts(this.value.split('|')[0], this.value.split('|')[1])">
+    <option value="Georgia|Inter">Vintage</option>
+    <option value="Poppins|Inter">Modern</option>
+    <option value="Merriweather|Inter">Readable</option>
+  </select>
+</div>
+
       <div class="controls">
         <label for="themeSelect" class="sr-only">Theme</label>
         <select id="themeSelect" aria-label="Choose theme">

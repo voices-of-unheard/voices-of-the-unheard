@@ -1,4 +1,31 @@
+:root{
+  --bg: #fbf6ef;
+  --panel: #fffaf3;
+  --text: #222;
+  --muted: #6a5946;
+  --accent: #b05c00;
+  --card-shadow: 0 10px 30px rgba(10,10,10,0.06);
+  --font-heading: "Georgia", serif;
+  --font-body: "Inter", system-ui, sans-serif;
+}
+
+/* Dark theme override */
+:root.theme-dark {
+  --bg: #0f1113;
+  --panel: #161718;
+  --text: #eaeaea;
+  --muted: #bdbdbd;
+  --accent: #f59e0b;
+  --card-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* Use the vars throughout your CSS */
+body{ background: linear-gradient(120deg,var(--bg), #fff); color:var(--text); font-family:var(--font-body); }
+.card { background:var(--panel); box-shadow:var(--card-shadow); color:var(--text); }
+a.btn.primary { background:var(--accent); color:#fff; }
+
 /* styles.css - responsive + dark mode and animations */
+
 :root{
   --bg1: #fbf6ef;
   --bg2: #f0e6d6;

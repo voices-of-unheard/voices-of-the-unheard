@@ -86,4 +86,47 @@ window.addEventListener('load', () => {
   });
 });
 
+/* ===== THEME CONTROLLER ===== */
+(function(){
+  const root = document.documentElement;
+
+  function applyTheme(theme){
+    if(theme === 'dark') root.classList.add('theme-dark');
+    else root.classList.remove('theme-dark');
+    localStorage.setItem('vou_theme', theme);
+  }
+
+  // Load saved theme or system preference
+  const saved = localStorage.getItem('vou_theme');
+  if(saved){
+    applyTheme(saved);
+  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches){
+    applyTheme('dark');
+  }
+
+  // Accent color
+  const savedAccent = localStorage.getItem('vou_accent');
+  if(savedAccent) root.style.setProperty('--accent', savedAccent);
+
+  // Font settings
+  const savedFont = localStorage.getItem('vou_font');
+  if(savedFont){
+    const [h,b] = savedFont.split('|');
+    root.style.setProperty('--font-heading', h);
+    root.style.setProperty('--font-body', b);
+  }
+
+  // Expose functions to HTML
+  window.setTheme = applyTheme;
+  window.setAccent = (hex)=>{
+    root.style.setProperty('--accent', hex);
+    localStorage.setItem('vou_accent', hex);
+  };
+  window.setFonts = (h,b)=>{
+    root.style.setProperty('--font-heading', h);
+    root.style.setProperty('--font-body', b);
+    localStorage.setItem('vou_font', h + '|' + b);
+  };
+})();
+
 
